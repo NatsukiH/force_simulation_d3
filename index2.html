@@ -1,51 +1,34 @@
-<!-- https://wizardace.com/d3-forcesimulation-simple/ -->
-
 <!DOCTYPE html>
 <html>
  
 <head>
   <meta charset="utf-8">
-  <title>D3 v5 force simulation</title>
+  <title>D3 v5 force simulation node detail</title>
 </head>
  
 <body>
-  <svg width="400" height="300"></svg>
+  <svg width="800" height="600"></svg>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script>
   // 1. 描画用のデータ準備
-  var nodesData = [
-    {},
-    {},
-    {},
-    {},
-    {},
-    {}
-  ]
- 
-  var linksData = [
-    { "source": 0, "target": 1 },
-    { "source": 1, "target": 4 },
-    { "source": 2, "target": 3 },
-    { "source": 2, "target": 5 },
-    { "source": 5, "target": 1 }
-  ]
+  var nodesData = [];
+  for(var i = 0; i < 50; i++) {
+    nodesData.push({
+      "x": 800 * Math.random(),
+      "y": 600 * Math.random(),
+      "r": 30 * Math.random() + 5
+    });
+  }
  
   // 2. svg要素を配置
-  var link = d3.select("svg")
-    .selectAll("line")
-    .data(linksData)
-    .enter()
-    .append("line")
-    .attr("stroke-width", 1)
-    .attr("stroke", "black");
- 
   var node = d3.select("svg")
     .selectAll("circle")
     .data(nodesData)
     .enter()
     .append("circle")
-    .attr("r", 7)
+    .attr("r", function(d) { return d.r })
     .attr("fill", "LightSalmon")
+    .attr("stroke", "black")
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
@@ -53,24 +36,23 @@
  
   // 3. forceSimulation設定
   var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink())
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(200, 150));
+    // .force("link", d3.forceLink()) // 今回は不使用
+    .force("collide",
+      d3.forceCollide()
+      .radius(function(d) { return d.r })
+      .strength(1.0)
+      .iterations(16))
+    .force("charge", d3.forceManyBody().strength(5))
+    .force("x", d3.forceX().strength(0.1).x(400))
+    .force("y", d3.forceY().strength(0.1).y(300));
+  // .force("center", d3.forceCenter(300, 200)); // 今回は不使用
  
   simulation
     .nodes(nodesData)
     .on("tick", ticked);
  
-  simulation.force("link")
-    .links(linksData);
- 
   // 4. forceSimulation 描画更新用関数
   function ticked() {
-    link
-      .attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
     node
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; });
